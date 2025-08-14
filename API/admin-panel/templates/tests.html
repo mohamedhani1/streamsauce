@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DASH Player Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.10.1/shaka-player.compiled.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        video {
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+            background: black;
+        }
+        .info {
+            margin: 20px 0;
+            padding: 15px;
+            background: #333;
+            border-radius: 5px;
+        }
+        .error {
+            background: #660000;
+            color: #ffcccc;
+        }
+        .success {
+            background: #006600;
+            color: #ccffcc;
+        }
+        .loading {
+            background: #666600;
+            color: #ffffcc;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0055aa;
+        }
+        .details {
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            background: #222;
+            padding: 10px;
+            border-radius: 3px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DASH Player Test</h1>
+
+        <div class="info">
+            <strong>MPD URL:</strong><br>
+            https://dcj-ac-live.cdn.indazn.com/dash/dazn-linear-507/stream.mpd?p=web&dazn-token=...
+        </div>
+
+        <video id="video" controls muted></video>
+
+        <div class="info" id="status">
+            <strong>Status:</strong> Ready to load
+        </div>
+
+        <div>
+            <button onclick="loadStream()">Load Stream</button>
+            <button onclick="playStream()">Play</button>
+            <button onclick="pauseStream()">Pause</button>
+            <button onclick="showInfo()">Show Stream Info</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+
+        <div class="details" id="log"></div>
+    </div>
+
+    <script>
+        let player;
+        const video = document.getElementById('video');
+        const statusDiv = document.getElementById('status');
+        const logDiv = document.getElementById('log');
+
+        const mpdUrl = 'https://dcj-ac-live.cdn.indazn.com/dash/dazn-linear-507/stream.mpd?p=web&dazn-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InV1aWRfMSJ9.eyJwYXRocyI6WyIvZGFzaC9kYXpuLWxpbmVhci01MDciXSwiZXhjIjpbXSwiaGVhZGVycyI6WyJ1c2VyLWFnZW50Il0sImNvIjp0cnVlLCJpcCI6ZmFsc2UsImFzbiI6WyI4NDUyIl0sImludHNpZyI6InpuN2dlMUpYcVgwREpqOFptZHRGbzBzS1VYRTJQN0czcWJtd1lsUG1LT1EiLCJpYXQiOjE3NTUxOTIxODIsImV4cCI6MTc1NTI3ODU4Mn0.i42DADkACDmU2xfGZEYGvcIT8qpEvaz8kawJU67l8CI';
+        const decryptionKey = '8ab47741930c476780515f9a00decb0a:7ab4b9ae5a48aa526e511a913b832769';
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toISOString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logDiv.textContent += logEntry;
+            logDiv.scrollTop = logDiv.scrollHeight;
+
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            statusDiv.innerHTML = `<strong>Status:</strong> ${message}`;
+            statusDiv.className = `info ${type}`;
+        }
+
+        function clearLog() {
+            logDiv.textContent = '';
+        }
+
+        async function initPlayer() {
+            if (!shaka.Player.isBrowserSupported()) {
+                log('Browser not supported!', 'error');
+                updateStatus('Browser not supported', 'error');
+                return false;
+            }
+
+            if (player) {
+                await player.destroy();
+            }
+
+            player = new shaka.Player(video);
+
+            // Error handling
+            player.addEventListener('error', (event) => {
+                const error = event.detail;
+                log(`Shaka Error ${error.code}: ${error.message}`, 'error');
+                updateStatus(`Error ${error.code}: ${error.message}`, 'error');
+
+                // Log detailed error info
+                if (error.data && error.data.length > 0) {
+                    log(`Error details: ${JSON.stringify(error.data)}`, 'error');
+                }
+            });
+
+            // Network request logging
+            player.getNetworkingEngine().registerRequestFilter((type, request) => {
+                log(`Request: ${type} - ${request.uris[0]}`);
+
+                // Add headers that might be required
+                request.headers['User-Agent'] = navigator.userAgent;
+                request.headers['Referer'] = window.location.origin;
+
+                // Try to fix segment URLs by replacing m parameter with dazn-token
+                if (type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
+                    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InV1aWRfMSJ9.eyJwYXRocyI6WyIvZGFzaC9kYXpuLWxpbmVhci01MDciXSwiZXhjIjpbXSwiaGVhZGVycyI6WyJ1c2VyLWFnZW50Il0sImNvIjp0cnVlLCJpcCI6ZmFsc2UsImFzbiI6WyI4NDUyIl0sImludHNpZyI6InpuN2dlMUpYcVgwREpqOFptZHRGbzBzS1VYRTJQN0czcWJtd1lsUG1LT1EiLCJpYXQiOjE3NTUxOTIxODIsImV4cCI6MTc1NTI3ODU4Mn0.i42DADkACDmU2xfGZEYGvcIT8qpEvaz8kawJU67l8CI';
+
+                    request.uris = request.uris.map(uri => {
+                        log(`Original segment URI: ${uri}`);
+                        try {
+                            const url = new URL(uri);
+                            url.searchParams.delete('m');
+                            url.searchParams.set('dazn-token', token);
+                            const newUri = url.toString();
+                            log(`Modified segment URI: ${newUri}`);
+                            return newUri;
+                        } catch (e) {
+                            log(`Failed to modify URI: ${e.message}`, 'error');
+                            return uri;
+                        }
+                    });
+                }
+            });
+
+            player.getNetworkingEngine().registerResponseFilter((type, response) => {
+                log(`Response: ${type} - Status: ${response.status}`);
+                if (response.status >= 400) {
+                    log(`HTTP Error ${response.status}: ${response.statusText}`, 'error');
+                }
+            });
+
+            // Configure DRM
+            const [kid, key] = decryptionKey.split(':');
+            if (kid && key) {
+                log(`Configuring DRM with KID: ${kid}`);
+                player.configure({
+                    drm: {
+                        clearKeys: {
+                            [kid]: key
+                        }
+                    }
+                });
+            }
+
+            return true;
+        }
+
+        async function loadStream() {
+            updateStatus('Initializing player...', 'loading');
+            log('Initializing Shaka Player...');
+
+            if (!(await initPlayer())) {
+                return;
+            }
+
+            try {
+                updateStatus('Loading MPD manifest...', 'loading');
+                log(`Loading MPD: ${mpdUrl}`);
+
+                await player.load(mpdUrl);
+
+                updateStatus('Stream loaded successfully!', 'success');
+                log('Stream loaded successfully!');
+
+                // Try to auto-play
+                try {
+                    await video.play();
+                    updateStatus('Playing stream', 'success');
+                    log('Auto-play successful');
+                } catch (playError) {
+                    updateStatus('Stream loaded - click play button', 'success');
+                    log(`Auto-play failed: ${playError.message}`);
+                }
+
+            } catch (error) {
+                updateStatus(`Failed to load stream: ${error.message}`, 'error');
+                log(`Load failed: ${error.message}`, 'error');
+                console.error('Full error:', error);
+            }
+        }
+
+        async function playStream() {
+            try {
+                await video.play();
+                updateStatus('Playing', 'success');
+                log('Video playing');
+            } catch (error) {
+                updateStatus(`Play failed: ${error.message}`, 'error');
+                log(`Play failed: ${error.message}`, 'error');
+            }
+        }
+
+        function pauseStream() {
+            video.pause();
+            updateStatus('Paused', 'info');
+            log('Video paused');
+        }
+
+        function showInfo() {
+            if (!player) {
+                log('No player initialized', 'error');
+                return;
+            }
+
+            const stats = player.getStats();
+            const tracks = player.getVariantTracks();
+            const textTracks = player.getTextTracks();
+
+            log('=== STREAM INFO ===');
+            log(`Stats: ${JSON.stringify(stats, null, 2)}`);
+            log(`Video tracks: ${tracks.length}`);
+            tracks.forEach((track, i) => {
+                log(`Track ${i}: ${track.width}x${track.height} @ ${track.bandwidth}bps`);
+            });
+            log(`Text tracks: ${textTracks.length}`);
+            log('=== END INFO ===');
+        }
+
+        // Video event listeners
+        video.addEventListener('loadstart', () => log('Video loadstart'));
+        video.addEventListener('loadedmetadata', () => log('Video metadata loaded'));
+        video.addEventListener('loadeddata', () => log('Video data loaded'));
+        video.addEventListener('canplay', () => log('Video can play'));
+        video.addEventListener('canplaythrough', () => log('Video can play through'));
+        video.addEventListener('playing', () => log('Video playing'));
+        video.addEventListener('pause', () => log('Video paused'));
+        video.addEventListener('ended', () => log('Video ended'));
+        video.addEventListener('error', (e) => log(`Video error: ${e.message}`, 'error'));
+        video.addEventListener('stalled', () => log('Video stalled', 'error'));
+        video.addEventListener('waiting', () => log('Video waiting'));
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            log('Page loaded, ready to test stream');
+        });
+    </script>
+</body>
+</html>

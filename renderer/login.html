@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamSauce - Login</title>
+    <link rel="stylesheet" href="styles/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-form">
+            <div class="logo">
+                <div class="logo-container">
+                    <img id="appLogo" class="app-logo" style="display: none;" alt="Logo">
+                    <h1 id="appTitle">StreamSauce</h1>
+                </div>
+                <p>Enter your subscription key to access channels</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="subscriptionKey">Subscription Key</label>
+                    <input type="password" id="subscriptionKey" name="subscriptionKey" required 
+                           placeholder="Enter your subscription key">
+                </div>
+                
+                <button type="submit" id="loginBtn">
+                    <span class="btn-text">Access Channels</span>
+                    <div class="spinner" style="display: none;"></div>
+                </button>
+                
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/login.js"></script>
+</body>
+</html>

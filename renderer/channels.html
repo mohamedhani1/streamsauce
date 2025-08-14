@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamSauce - Packages</title>
+    <link rel="stylesheet" href="styles/channels.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.10.1/shaka-player.compiled.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-brand">
+                <img id="appLogo" class="app-logo" style="display: none;" alt="Logo">
+                <h1 id="appTitle">StreamSauce</h1>
+            </div>
+            <div class="header-controls">
+                <button id="darkModeBtn" class="btn btn-secondary">🌙 Dark</button>
+                <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
+                <div class="user-avatar-container">
+                    <img id="userAvatar" class="user-avatar" src="" alt="User" onclick="toggleUserMenu()">
+                    <div id="userMenu" class="user-menu" style="display: none;">
+                        <div class="user-info">
+                            <img id="userMenuAvatar" class="user-menu-avatar" src="" alt="User">
+                            <div class="user-details">
+                                <div class="user-name" id="userName">User Name</div>
+                                <div class="user-subscription">
+                                    <div>Started: <span id="subscriptionStart">--</span></div>
+                                    <div>Expires: <span id="subscriptionEnd">--</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <button id="logoutBtn" class="menu-logout-btn">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Packages View -->
+            <div id="packagesView" class="content-view">
+                <div class="view-header">
+                    <h2>Available Packages</h2>
+                </div>
+                <div class="packages-grid" id="packagesGrid">
+                    <div class="loading">Loading packages...</div>
+                </div>
+            </div>
+
+            <!-- Channels View -->
+            <div id="channelsView" class="content-view" style="display: none;">
+                <div class="view-header">
+                    <button id="backToPackages" class="btn btn-secondary">← Back to Packages</button>
+                    <h2 id="packageTitle">Package Channels</h2>
+                </div>
+                <div class="channels-grid" id="channelsGrid">
+                    <div class="loading">Loading channels...</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Simple Video Player Modal -->
+        <div id="playerModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="currentChannelName">Channel</h2>
+                    <button id="closePlayerBtn" class="close-btn">&times;</button>
+                </div>
+
+                <div class="video-container">
+                    <video id="videoPlayer" autoplay muted></video>
+                    
+                    <div id="loadingSpinner" class="loading-spinner" style="display: none;"></div>
+                    <div id="playerStatus" class="player-status">Initializing player...</div>
+
+                    <!-- Enhanced Controls -->
+                    <div class="video-controls" id="videoControls">
+                        <button class="control-btn" id="playPauseBtn">⏸️</button>
+                        <div class="control-group">
+                            <select id="qualitySelect" class="control-select" style="display: none;">
+                                <option value="">Auto Quality</option>
+                            </select>
+                            <select id="subtitleSelect" class="control-select" style="display: none;">
+                                <option value="">No Subtitles</option>
+                            </select>
+                        </div>
+                        <button class="control-btn" id="fullscreenBtn">⛶</button>
+                        <button class="control-btn" id="volumeBtn">🔊</button>
+                        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/channels.js"></script>
+</body>
+</html>

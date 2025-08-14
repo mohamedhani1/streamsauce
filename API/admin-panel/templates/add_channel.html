@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Add Channel - IPTV Admin Panel{% endblock %}
+{% block page_title %}Add New Channel{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">Channel Information</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Channel Name *</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="logo" class="form-label">Logo URL</label>
+                                <input type="url" class="form-control" id="logo" name="logo"
+                                       placeholder="https://example.com/logo.png"
+                                       onchange="previewLogo()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="mpd" class="form-label">MPD URL *</label>
+                        <input type="url" class="form-control" id="mpd" name="mpd" required
+                               placeholder="https://example.com/stream.mpd">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="key" class="form-label">Decryption Key</label>
+                                <input type="text" class="form-control" id="key" name="key"
+                                       placeholder="Optional decryption key">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="expires_every" class="form-label">Expires Every (seconds)</label>
+                                <input type="number" class="form-control" id="expires_every" name="expires_every"
+                                       value="3600" min="60">
+                                <div class="form-text">How often the stream needs to be refreshed</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="package_id" class="form-label">Add to Package (Optional)</label>
+                        <select class="form-select" id="package_id" name="package_id">
+                            <option value="">Select a package...</option>
+                            {% for package in packages %}
+                            <option value="{{ package.id }}">{{ package.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('channels') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Channels
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Channel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">Preview</h6>
+            </div>
+            <div class="card-body text-center">
+                <div id="logoPreview" class="mb-3">
+                    <i class="fas fa-tv fa-3x text-muted"></i>
+                    <p class="text-muted mt-2">Logo preview will appear here</p>
+                </div>
+                <h5 id="namePreview" class="text-muted">Channel name will appear here</h5>
+            </div>
+        </div>
+
+        <div class="card shadow mt-3">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-info">Help</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-info-circle text-info me-2"></i>Channel name should be unique</li>
+                    <li><i class="fas fa-info-circle text-info me-2"></i>MPD URL must be accessible</li>
+                    <li><i class="fas fa-info-circle text-info me-2"></i>Logo should be square format for best results</li>
+                    <li><i class="fas fa-info-circle text-info me-2"></i>Expiry time affects refresh frequency</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function previewLogo() {
+        const logoUrl = document.getElementById('logo').value;
+        const logoPreview = document.getElementById('logoPreview');
+
+        if (logoUrl) {
+            logoPreview.innerHTML = `<img src="${logoUrl}" alt="Logo Preview" class="img-fluid" style="max-height: 100px;">`;
+        } else {
+            logoPreview.innerHTML = `
+                <i class="fas fa-tv fa-3x text-muted"></i>
+                <p class="text-muted mt-2">Logo preview will appear here</p>
+            `;
+        }
+    }
+
+    // Update name preview
+    document.getElementById('name').addEventListener('input', function() {
+        const namePreview = document.getElementById('namePreview');
+        const name = this.value;
+
+        if (name) {
+            namePreview.textContent = name;
+            namePreview.className = 'text-dark';
+        } else {
+            namePreview.textContent = 'Channel name will appear here';
+            namePreview.className = 'text-muted';
+        }
+    });
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const name = document.getElementById('name').value.trim();
+        const mpd = document.getElementById('mpd').value.trim();
+
+        if (!name) {
+            alert('Channel name is required');
+            e.preventDefault();
+            return;
+        }
+
+        if (!mpd) {
+            alert('MPD URL is required');
+            e.preventDefault();
+            return;
+        }
+
+        // Validate URLs
+        try {
+            new URL(mpd);
+        } catch {
+            alert('Please enter a valid MPD URL');
+            e.preventDefault();
+            return;
+        }
+
+        const logo = document.getElementById('logo').value.trim();
+        if (logo) {
+            try {
+                new URL(logo);
+            } catch {
+                alert('Please enter a valid logo URL or leave it empty');
+                e.preventDefault();
+                return;
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Channels - IPTV Admin Panel{% endblock %}
+{% block page_title %}Channels Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <p class="text-muted">Manage your IPTV channels</p>
+    </div>
+    <a href="{{ url_for('add_channel') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Channel
+    </a>
+</div>
+
+<div class="card shadow">
+    <div class="card-header">
+        <h6 class="m-0 font-weight-bold text-primary">All Channels</h6>
+    </div>
+    <div class="card-body">
+        {% if channels %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Logo</th>
+                        <th>Name</th>
+                        <th>MPD</th>
+                        <th>Expires Every</th>
+                        <th>Last Refreshed</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for channel in channels %}
+                    <tr>
+                        <td>{{ channel.id }}</td>
+                        <td>
+                            {% if channel.logo %}
+                            <img src="{{ channel.logo }}" alt="Logo" class="logo-preview">
+                            {% else %}
+                            <span class="text-muted">No logo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ channel.name }}</strong>
+                        </td>
+                        <td>
+                            <code class="text-truncate" style="max-width: 200px; display: inline-block;">
+                                {{ channel.mpd[:50] }}{% if channel.mpd|length > 50 %}...{% endif %}
+                            </code>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ channel.expires_every }}s</span>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ channel.last_refreshed[:19] if channel.last_refreshed else 'Never' }}
+                            </small>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('edit_channel', channel_id=channel.id) }}"
+                                   class="btn btn-sm btn-outline-primary" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button onclick="deleteChannel({{ channel.id }}, '{{ channel.name }}')"
+                                        class="btn btn-sm btn-outline-danger" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-tv fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No channels found</h5>
+            <p class="text-muted">Start by adding your first channel</p>
+            <a href="{{ url_for('add_channel') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add First Channel
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function deleteChannel(channelId, channelName) {
+        if (confirm(`Are you sure you want to delete channel "${channelName}"?`)) {
+            window.location.href = `/channels/delete/${channelId}`;
+        }
+    }
+
+    // Add search functionality
+    function searchChannels() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const tableRows = document.querySelectorAll('tbody tr');
+
+        tableRows.forEach(row => {
+            const channelName = row.cells[2].textContent.toLowerCase();
+            const channelMpd = row.cells[3].textContent.toLowerCase();
+
+            if (channelName.includes(searchTerm) || channelMpd.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+</script>
+
+<style>
+    .text-truncate {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+{% endblock %}

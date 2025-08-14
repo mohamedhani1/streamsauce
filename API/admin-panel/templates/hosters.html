@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}IPTV Hosters{% endblock %}
+{% block page_title %}IPTV Hosters{% endblock %}
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('add_hoster') }}" class="btn btn-primary">Add Hoster</a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Logo</th>
+                        <th>Name</th>
+                        <th>Color Palette</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hoster in hosters %}
+                    <tr>
+                        <td>{{ hoster.id }}</td>
+                        <td>
+                            {% if hoster.logo %}
+                            <img src="{{ hoster.logo }}" class="logo-preview">
+                            {% endif %}
+                        </td>
+                        <td>{{ hoster.name }}</td>
+                        <td><small>{{ hoster.color_palette or '-' }}</small></td>
+                        <td>
+                            <a href="{{ url_for('edit_hoster', hoster_id=hoster.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a href="{{ url_for('delete_hoster', hoster_id=hoster.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

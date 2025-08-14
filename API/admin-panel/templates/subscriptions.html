@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Subscriptions{% endblock %}
+{% block page_title %}Subscriptions{% endblock %}
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('add_subscription') }}" class="btn btn-primary">Add Subscription</a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User ID</th>
+                        <th>Key</th>
+                        <th>Started</th>
+                        <th>End</th>
+                        <th>Paid</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in subscriptions %}
+                    <tr>
+                        <td>{{ sub.id }}</td>
+                        <td>{{ sub.user_id }}</td>
+                        <td><code>{{ sub.key }}</code></td>
+                        <td>{{ sub.started[:10] }}</td>
+                        <td>{{ sub.end[:10] }}</td>
+                        <td>${{ sub.payed }}</td>
+                        <td>
+                            <a href="{{ url_for('edit_subscription', subscription_id=sub.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a href="{{ url_for('delete_subscription', subscription_id=sub.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
